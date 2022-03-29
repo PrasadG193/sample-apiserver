@@ -17,7 +17,10 @@ limitations under the License.
 package flunder
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -26,25 +29,34 @@ import (
 )
 
 // NewREST returns a RESTStorage object that will work against API services.
-func NewREST(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) (*registry.REST, error) {
+func NewREST(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) *registry.REST {
 	strategy := NewStrategy(scheme)
 
 	store := &genericregistry.Store{
-		NewFunc:                  func() runtime.Object { return &wardle.Flunder{} },
-		NewListFunc:              func() runtime.Object { return &wardle.FlunderList{} },
-		PredicateFunc:            MatchFlunder,
+		NewFunc:     func() runtime.Object { return &wardle.Flunder{} },
+		NewListFunc: func() runtime.Object { return &wardle.FlunderList{} },
+		//PredicateFunc:            MatchFlunder,
 		DefaultQualifiedResource: wardle.Resource("flunders"),
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
+		Storage:        genericregistry.DryRunnableStorage{Storage: newDryRunStorage(schema.GroupVersionResource{Group: "wardle.example.com", Version: "v1alpha1", Resource: "flunders"})},
 
 		// TODO: define table converter that exposes more than name/creation timestamp
 		TableConvertor: rest.NewDefaultTableConvertor(wardle.Resource("flunders")),
 	}
 	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
-		return nil, err
+		err = fmt.Errorf("unable to create REST storage for a resource due to %v, will die", err)
+		panic(err)
 	}
-	return &registry.REST{store}, nil
+
+	return &registry.REST{
+		Scoper:          store,
+		Creater:         store,
+		Lister:          store,
+		Getter:          store,
+		GracefulDeleter: store,
+	}
 }
