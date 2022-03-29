@@ -32,7 +32,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 	utilfeature "k8s.io/apiserver/pkg/util/feature"
-	"k8s.io/sample-apiserver/pkg/admission/plugin/banflunder"
 	"k8s.io/sample-apiserver/pkg/admission/wardleinitializer"
 	"k8s.io/sample-apiserver/pkg/apis/wardle/v1alpha1"
 	"k8s.io/sample-apiserver/pkg/apiserver"
@@ -106,10 +105,10 @@ func (o WardleServerOptions) Validate(args []string) error {
 // Complete fills in fields required to have valid data
 func (o *WardleServerOptions) Complete() error {
 	// register admission plugins
-	banflunder.Register(o.RecommendedOptions.Admission.Plugins)
+	//banflunder.Register(o.RecommendedOptions.Admission.Plugins)
 
 	// add admission plugins to the RecommendedPluginOrder
-	o.RecommendedOptions.Admission.RecommendedPluginOrder = append(o.RecommendedOptions.Admission.RecommendedPluginOrder, "BanFlunder")
+	//o.RecommendedOptions.Admission.RecommendedPluginOrder = append(o.RecommendedOptions.Admission.RecommendedPluginOrder, "BanFlunder")
 
 	return nil
 }
